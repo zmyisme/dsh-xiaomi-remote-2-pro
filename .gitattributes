@@ -1,0 +1,17 @@
+# 统一换行符：仓库里一律存 LF，检出也一律用 LF。
+#
+# 这些文件全是 JS / Markdown / YAML / JSON，没有需要 CRLF 的 Windows 专属类型，
+# 而 Linux 上的 node 与 shell 对 CRLF 很敏感（CI 就跑在 ubuntu 上）。
+# 显式钉死 LF，可以避免 Windows 开发机与 CI 之间出现无意义的整文件 diff。
+* text=auto eol=lf
+
+# 以后加入二进制资源时不要被当成文本改写
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.mp3  binary
+*.wav  binary
+*.node binary
+*.exe  binary

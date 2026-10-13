@@ -1,0 +1,61 @@
+{
+  "name": "dsh-xiaomi-remote-2-pro",
+  "version": "0.1.0",
+  "description": "DSH 插件：把小米蓝牙遥控器 2 Pro 变成 Windows 上的 Vibe Coding 语音输入与快捷控制台。A DSH plugin that turns the Xiaomi Bluetooth Remote 2 Pro into a push-to-talk voice input and shortcut console for Windows.",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "xiaomi",
+    "rc003",
+    "bluetooth-remote",
+    "voice-input",
+    "speech-to-text",
+    "vibe-coding",
+    "windows"
+  ],
+  "type": "module",
+  "main": "host.js",
+  "exports": {
+    ".": "./host.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "host.js",
+    "client.js",
+    "lib",
+    "docs",
+    "cordis.patch.yml",
+    "README.md",
+    "README.en.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-slots"
+      ]
+    }
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "check": "node --check host.js && node --check client.js",
+    "test": "node --test"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zmyisme/dsh-xiaomi-remote-2-pro.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zmyisme/dsh-xiaomi-remote-2-pro/issues"
+  },
+  "homepage": "https://github.com/zmyisme/dsh-xiaomi-remote-2-pro#readme"
+}

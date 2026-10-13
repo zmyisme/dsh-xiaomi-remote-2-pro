@@ -1,0 +1,18 @@
+# ============================================================================
+# dsh-xiaomi-remote-2-pro —— DSH bundle patch（挂载声明）
+# ============================================================================
+# DSH 启动时按 bundle 层栈叠加各插件 patch，本文件把本插件插入 profile 的配置树。
+#
+# 安装（二选一）：
+#   dsh plugin --profile desktop add dsh-xiaomi-remote-2-pro
+#   dsh plugin --profile desktop add github:zmyisme/dsh-xiaomi-remote-2-pro
+#
+# 本地开发（不发布也能装）：
+#   dsh plugin --profile desktop add link:<本目录绝对路径>
+#
+# 注意：`id` 必须与 host.js 导出的 `name` 保持一致，否则服务与日志会错位。
+# ============================================================================
+
+- insert:
+    - id: xiaomi-remote-2-pro
+      name: dsh-xiaomi-remote-2-pro

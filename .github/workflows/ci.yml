@@ -1,0 +1,48 @@
+name: test
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: node ${{ matrix.node }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # ubuntu 这一列是刻意的：lib/ 里的纯逻辑不应该依赖 Windows，
+        # 一旦有人不小心引入了平台相关的假设，这里会先红。
+        os: [windows-latest, ubuntu-latest]
+        node: ['20', '22']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Syntax check
+        run: |
+          node --check host.js
+          node --check client.js
+
+      - name: Test suite
+        # 零依赖：不需要 npm install，不需要构建
+        run: node --test
+
+  packaging:
+    name: packaging contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate dsh manifest against the on-disk layout
+        run: node --test test/package.test.mjs
