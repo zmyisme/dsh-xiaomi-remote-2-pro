@@ -9,6 +9,16 @@ import {
   summariseDevices,
 } from '../lib/device.js'
 
+/**
+ * 这些用例都注入假执行器，因此与真实平台无关。但 `createDeviceProbe` 默认读取
+ * `process.platform`——在 Linux/macOS 上它会直接返回 `unsupported`，**根本不会调用
+ * 假执行器**，于是这一整组用例只会在 Windows 上通过（CI 的 ubuntu 那一列就是这么红的）。
+ *
+ * 所以这里显式钉死 win32。要测别的平台时在 options 里写 `platform` 覆盖即可，
+ * 因为展开顺序让覆盖值优先级更高。
+ */
+const createWinProbe = (options) => createDeviceProbe({ platform: 'win32', ...options })
+
 test('RC003 的 VID / PID 与实测一致', () => {
   assert.equal(RC003_VENDOR_ID, '2717')
   assert.equal(RC003_PRODUCT_ID, '32b8')
@@ -27,7 +37,7 @@ test('encodePowerShellCommand 产出 UTF-16LE base64（避免引号转义地狱�
 
 test('探测脚本按 VID/PID 两个片段同时匹配，不依赖固件版本', async () => {
   const { runner, calls } = fakeRunner('[]')
-  const probe = createDeviceProbe({ runner, logger: { warn() {} } })
+  const probe = createWinProbe({ runner, logger: { warn() {} } })
   await probe.probe()
   const script = Buffer.from(calls[0].args.at(-1), 'base64').toString('utf16le')
   assert.match(script, /-match '2717'/)
@@ -40,7 +50,7 @@ test('探测脚本强制把 stdout 设成 UTF-8（否则中文设备名会变乱
   // 这是一条真实的回归测试：Windows PowerShell 5.1 默认按控制台代码页输出，
   // Node 按 UTF-8 读取，实测会把"蓝牙 LE 通用属性服务"读成"???? LE ???????? ???"。
   const { runner, calls } = fakeRunner('[]')
-  const probe = createDeviceProbe({ runner, logger: { warn() {} } })
+  const probe = createWinProbe({ runner, logger: { warn() {} } })
   await probe.probe()
   const script = Buffer.from(calls[0].args.at(-1), 'base64').toString('utf16le')
   assert.match(script, /\[Console\]::OutputEncoding = \[System\.Text\.Encoding\]::UTF8/)
@@ -109,7 +119,7 @@ test('探测到设备时状态为 connected，并保留 PnP 细节', async () =>
     },
   ])
   const { runner, calls } = fakeRunner(payload)
-  const probe = createDeviceProbe({ runner, logger: { warn() {} } })
+  const probe = createWinProbe({ runner, logger: { warn() {} } })
 
   const result = await probe.probe()
   assert.equal(result.status, 'connected')
@@ -130,7 +140,7 @@ test('ConvertTo-Json 对单个对象返回对象而不是数组，也要能处�
     instanceId: 'HID\\VID&012717_PID&32b8',
   })
   const { runner } = fakeRunner(payload)
-  const probe = createDeviceProbe({ runner, logger: { warn() {} } })
+  const probe = createWinProbe({ runner, logger: { warn() {} } })
   const result = await probe.probe()
   assert.equal(result.status, 'connected')
   assert.equal(result.devices.length, 1)
@@ -139,14 +149,14 @@ test('ConvertTo-Json 对单个对象返回对象而不是数组，也要能处�
 
 test('没有设备时状态为 absent', async () => {
   const { runner } = fakeRunner('[]')
-  const probe = createDeviceProbe({ runner, logger: { warn() {} } })
+  const probe = createWinProbe({ runner, logger: { warn() {} } })
   assert.equal((await probe.probe()).status, 'absent')
 })
 
 test('执行器抛异常时回落为 unknown，绝不向上抛', async () => {
   const warnings = []
   const { runner } = fakeRunner(new Error('powershell 不见了'))
-  const probe = createDeviceProbe({ runner, logger: { warn: (m) => warnings.push(m) } })
+  const probe = createWinProbe({ runner, logger: { warn: (m) => warnings.push(m) } })
   const result = await probe.probe()
   assert.equal(result.status, 'unknown')
   assert.match(result.reason, /powershell/)
@@ -155,14 +165,14 @@ test('执行器抛异常时回落为 unknown，绝不向上抛', async () => {
 
 test('输出不是合法 JSON 时也回落为 unknown', async () => {
   const { runner } = fakeRunner('<html>error</html>')
-  const probe = createDeviceProbe({ runner, logger: { warn() {} } })
+  const probe = createWinProbe({ runner, logger: { warn() {} } })
   const result = await probe.probe()
   assert.equal(result.status, 'unknown')
 })
 
 test('结果被缓存，force 强制重探，invalidate 清缓存', async () => {
   const { runner, calls } = fakeRunner('[]')
-  const probe = createDeviceProbe({ runner, cacheTtlMs: 60_000, logger: { warn() {} } })
+  const probe = createWinProbe({ runner, cacheTtlMs: 60_000, logger: { warn() {} } })
 
   await probe.probe()
   const cached = await probe.probe()
@@ -185,7 +195,7 @@ test('并发探测只跑一次', async () => {
       calls.push(1)
       resolveRunner = resolve
     })
-  const probe = createDeviceProbe({ runner, logger: { warn() {} } })
+  const probe = createWinProbe({ runner, logger: { warn() {} } })
   const first = probe.probe()
   const second = probe.probe()
   resolveRunner('[]')
@@ -197,7 +207,7 @@ test('并发探测只跑一次', async () => {
 
 test('last() 在探测前返回 null，探测后返回缓存结果', async () => {
   const { runner } = fakeRunner('[]')
-  const probe = createDeviceProbe({ runner, logger: { warn() {} } })
+  const probe = createWinProbe({ runner, logger: { warn() {} } })
   assert.equal(probe.last(), null)
   await probe.probe()
   assert.equal(probe.last().cached, true)
@@ -208,18 +218,18 @@ test('last() 必须报告缓存是否过期（否则设备状态永远不会更�
   // 回归测试：早先的实现无条件返回缓存，于是遥控器断开重连后面板永远显示旧状态
   const { runner } = fakeRunner('[]')
 
-  const fresh = createDeviceProbe({ runner, cacheTtlMs: 60_000, logger: { warn() {} } })
+  const fresh = createWinProbe({ runner, cacheTtlMs: 60_000, logger: { warn() {} } })
   await fresh.probe()
   assert.equal(fresh.last().stale, false, '刚探测过就不该算过期')
 
-  const alwaysStale = createDeviceProbe({ runner, cacheTtlMs: 0, logger: { warn() {} } })
+  const alwaysStale = createWinProbe({ runner, cacheTtlMs: 0, logger: { warn() {} } })
   await alwaysStale.probe()
   assert.equal(alwaysStale.last().stale, true, 'TTL 为 0 时应立刻算过期')
 })
 
 test('过期后 probe() 会重新执行，而不是一直吃旧缓存', async () => {
   const { runner, calls } = fakeRunner('[]')
-  const probe = createDeviceProbe({ runner, cacheTtlMs: 0, logger: { warn() {} } })
+  const probe = createWinProbe({ runner, cacheTtlMs: 0, logger: { warn() {} } })
   await probe.probe()
   assert.equal(probe.last().stale, true)
   await probe.probe()
@@ -228,7 +238,7 @@ test('过期后 probe() 会重新执行，而不是一直吃旧缓存', async ()
 
 test('非 Windows 平台明确报告 unsupported，而不是假装探测失败', async () => {
   const { runner, calls } = fakeRunner('[]')
-  const probe = createDeviceProbe({ runner, platform: 'darwin', logger: { warn() {} } })
+  const probe = createWinProbe({ runner, platform: 'darwin', logger: { warn() {} } })
   const result = await probe.probe()
   assert.equal(result.status, 'unsupported')
   assert.match(result.reason, /Windows/)
