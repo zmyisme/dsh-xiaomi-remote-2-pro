@@ -1,5 +1,8 @@
 # dsh-xiaomi-remote-2-pro
 
+[![test](https://github.com/zmyisme/dsh-xiaomi-remote-2-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/zmyisme/dsh-xiaomi-remote-2-pro/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 > Turn the **Xiaomi Bluetooth Remote 2 Pro (RC003)** into a push-to-talk voice input and a
 > one-key shortcut console **inside DeepSeek Harness**.
 > A ~$6 Bluetooth remote, one DSH plugin, zero native dependencies, zero admin rights, offline recognition.

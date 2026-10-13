@@ -1,5 +1,8 @@
 # dsh-xiaomi-remote-2-pro
 
+[![test](https://github.com/zmyisme/dsh-xiaomi-remote-2-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/zmyisme/dsh-xiaomi-remote-2-pro/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 > 把 **小米蓝牙遥控器 2 Pro（RC003）** 变成 DeepSeek Harness 里的**按住说话语音输入**与**一键快捷控制台**。
 > 40 块钱的蓝牙遥控器，一个 DSH 插件，零原生依赖、零管理员权限、离线识别。
 
